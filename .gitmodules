@@ -1,0 +1,3 @@
+[submodule "pdfwriter"]
+	path = pdfwriter
+	url = https://github.com/kubaroth/PDF-Writer.git
