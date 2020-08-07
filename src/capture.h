@@ -20,14 +20,13 @@ namespace vpl{
 /// Encode direction to look up neighbor pixels
 enum Direction {up, right, down, left};
 
-using namespace std;
 
 /// Command line arguments parsing helper functions
-std::vector<string>::iterator getCmdOption(std::vector<string>& args, const std::string & option) {
+std::vector<std::string>::iterator getCmdOption(std::vector<std::string>& args, const std::string & option) {
     return std::find(args.begin(), args.end(), option);
 }
 
-bool cmdOptionExists(const std::vector<string>& args, const std::string& option){
+bool cmdOptionExists(const std::vector<std::string>& args, const std::string& option){
     return (std::find(args.begin(), args.end(), option) != args.end());
 }
 
@@ -107,7 +106,7 @@ struct Png {
 struct PageInfo{
     int width;
     int height;
-    string filename = "";
+    std::string filename = "";
     int page_num = 0;
     bool test_ppm=false;
     PageInfo(int w, int h) : width(w), height(h) {}
@@ -134,7 +133,7 @@ struct RGB{
     bool operator==(const RGB& rhs) const {return (this->r + this->g + this->b == rhs.r + rhs.g + rhs.b) ? true : false;}
     bool operator!=(const RGB& rhs) const {return (!(*this == rhs)) ? true : false;}
 
-    friend ostream& operator<<(std:: ostream& ostr, RGB const & rgb){
+    friend std::ostream& operator<<(std:: ostream& ostr, RGB const & rgb){
         ostr << rgb.r<<','<<rgb.g << ','<<rgb.b << " [" << rgb.x <<','<<rgb.y << "] index: "<< rgb.index;
         return ostr;
     }
@@ -198,10 +197,10 @@ std::vector<RGB> loadPng(const std::string& input_path){
 }
 
 /// Used only to test segmentation without taking a screenshot each time.
-vector<int>&& loadPpm(const string& path){
-
-    // ifstream ii("page_012.ppm", ifstream::binary);
-    ifstream ii(path, ifstream::binary);
+std::vector<int>&& loadPpm(const std::string& path){
+    using namespace std;
+    
+    std::ifstream ii(path, ifstream::binary);
 
 
     ii.seekg (0, ii.end);
@@ -210,14 +209,15 @@ vector<int>&& loadPpm(const string& path){
 
     char * buffer = new char [length];
     ii.read(buffer, length);
-    int width = 1920;
-    int height = 1200;
+    int width = 270;
+    int height = 358;
+
 
     auto image = new vector<int>(length-18);
 
     int i =0;
     while (i < length){
-
+        // TODO:17 varies if there is a comment if the ppm file
         if (i >= 17)
             (*image)[i-17] = (int)buffer[i];
 
@@ -235,6 +235,8 @@ vector<int>&& loadPpm(const string& path){
 /// just capture selection
 std::vector<RGB> CaptureScreen(PageInfo& info, Window * window = nullptr) {
 
+    using namespace std;
+    
     // Bump file name to the next avaialble digit;
     auto list = glob("page_capture*.png");
     int total_files = list.size();
@@ -315,8 +317,9 @@ std::vector<RGB> CaptureScreen(PageInfo& info, Window * window = nullptr) {
 }
 
 /// Captures just a specified window - this is what we are ultimately after
-std::vector<RGB> CaptureWindow(vpl::PageInfo& info, const string& window_name){
-
+std::vector<RGB> CaptureWindow(vpl::PageInfo& info, const std::string& window_name){
+    using namespace std;
+    
     Display *display = XOpenDisplay(NULL);
 
     Window rootWindow = RootWindow(display, DefaultScreen(display));
@@ -361,6 +364,8 @@ std::vector<RGB> CaptureWindow(vpl::PageInfo& info, const string& window_name){
 
 
 void test_neighbor_pixels(std::vector<RGB> rgbs, std::vector<RGB*>& to_process, RGB* value, const PageInfo& info){
+    using namespace std;
+    
     // Test for pixel neigbors
     cout << "to_process:" << to_process[0] <<endl;
 
@@ -394,6 +399,7 @@ void test_neighbor_pixels(std::vector<RGB> rgbs, std::vector<RGB*>& to_process, 
 }
 ///
 void boundary_tracing(const PageInfo& info, std::vector<RGB>& rgbs){
+    using namespace std;
 
     int width = info.width;
     int height = info.height;
@@ -417,7 +423,8 @@ void boundary_tracing(const PageInfo& info, std::vector<RGB>& rgbs){
         cout << compareRGB(RGB(0,0,1), RGB(0,0,1)) <<endl;
 
     }
-
+    cout << width << " " << height <<  " " << width * height << endl;
+    cout << rgbs.size() << endl;
     assert  (rgbs.size() == width*height);
 
 

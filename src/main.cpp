@@ -4,11 +4,210 @@
 
 #include <iostream>
 
+#include "../install_dir/include/PDFWriter/PDFWriter.h"
+#include "../install_dir/include/PDFWriter/PDFPage.h"
+#include "../install_dir/include/PDFWriter/PageContentContext.h"
+#include "../install_dir/include/PDFWriter/PDFFormXObject.h"
+
+#include "../install_dir/include/LibPng/png.h"
+
 #include "capture.h"
 
-using namespace std;
+typedef struct
+{
+    uint8_t red;
+    uint8_t green;
+    uint8_t blue;
+}
+pixel_t;
 
-void help(){    
+typedef struct
+{
+    pixel_t *pixels;
+    size_t width;
+    size_t height;
+}
+bitmap_t;
+    
+/* Given "bitmap", this returns the pixel of bitmap at the point 
+   ("x", "y"). */
+
+static pixel_t * pixel_at (bitmap_t * bitmap, int x, int y)
+{
+    return bitmap->pixels + bitmap->width * y + x;
+}
+
+int savepng(std::string filename)
+{
+
+    auto image = vpl::loadPpm(filename);
+            
+    
+    int width = 270;
+    int height = 358;
+
+    
+    FILE * fp;
+    png_structp png_ptr = NULL;
+    png_infop info_ptr = NULL;
+    size_t x, y;
+    png_byte ** row_pointers = NULL;
+    /* "status" contains the return value of this function. At first
+       it is set to a value which means 'failure'. When the routine
+       has finished its work, it is set to a value which means
+       'success'. */
+    int status = -1;
+    /* The following number is set by trial and error only. I cannot
+       see where it it is documented in the libpng manual.
+    */
+    int pixel_size = 3;
+    int depth = 8;
+    
+    fp = fopen ("out_test.png", "wb");
+    if (! fp) {
+        throw ("open file failed");
+    }
+
+    png_ptr = png_create_write_struct (PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+    if (png_ptr == NULL) {
+        throw ("png_create_write_struct_failed");
+    }
+    
+    info_ptr = png_create_info_struct (png_ptr);
+    if (info_ptr == NULL) {
+        throw ("png_create_info_struct_failed");
+    }
+    
+    /* Set up error handling. */
+
+    if (setjmp (png_jmpbuf (png_ptr))) {
+        throw ("png_failure");
+    }
+    
+    /* Set image attributes. */
+
+    png_set_IHDR (png_ptr,
+                  info_ptr,
+                  width,
+                  height,
+                  depth,
+                  PNG_COLOR_TYPE_RGB,
+                  PNG_INTERLACE_NONE,
+                  PNG_COMPRESSION_TYPE_DEFAULT,
+                  PNG_FILTER_TYPE_DEFAULT);
+    
+    /* Initialize rows of PNG. */
+
+    row_pointers = (png_byte**) png_malloc (png_ptr, height * sizeof (png_byte *));
+    for (y = 0; y < height; y++) {
+        png_byte *row = (png_byte*) png_malloc (png_ptr, sizeof (uint8_t) * width * pixel_size);
+        row_pointers[y] = row;
+        for (x = 0; x < width; x++) {
+            // pixel_t * pixel = pixel_at (bitmap, x, y);
+            // *row++ = pixel->red;
+            // *row++ = pixel->green;
+            // *row++ = pixel->blue;
+
+            // bitmap->pixels + bitmap->width * y + x;
+            size_t pixel_index = y * width + x;
+            *row++ = (png_byte) image[pixel_index];
+            *row++ = (png_byte) image[pixel_index+1];
+            *row++ = (png_byte) image[pixel_index+2];
+            // row++;
+            std::cout << y << " " << x << " " <<image[pixel_index] << " " << image[pixel_index+1 ]<< " " << image[pixel_index+2] << std::endl;;
+        }
+        // std::cout << std::endl;
+        // std::cout << y << std::endl;
+    }
+
+
+    // /* Write the image data to "fp". */
+
+    png_init_io (png_ptr, fp);
+    png_set_rows (png_ptr, info_ptr, row_pointers);
+    png_write_png (png_ptr, info_ptr, PNG_TRANSFORM_IDENTITY, NULL);
+
+    /* The routine has successfully written the file, so we set
+       "status" to a value which indicates success. */
+
+    status = 0;
+    
+    for (y = 0; y < height; y++) {
+        png_free (png_ptr, row_pointers[y]);
+    }
+    png_free (png_ptr, row_pointers);
+    
+
+}
+
+   
+int testpdf(){
+
+    using namespace std;
+
+    PDFWriter pdfWriter;
+	EStatusCode status;
+
+	do
+	{
+        status = pdfWriter.StartPDF( "PNGTest_.pdf", ePDFVersion14, LogConfiguration(true, true, "PNGTest_.log"));
+		if (status != PDFHummus::eSuccess)
+		{
+			cout << "failed to start PDF\n";
+			break;
+		}
+
+		PDFPage* page = new PDFPage();
+		page->SetMediaBox(PDFRectangle(0, 0, 595, 842));
+
+		PageContentContext* pageContentContext = pdfWriter.StartPageContentContext(page);
+		if (NULL == pageContentContext)
+		{
+			status = PDFHummus::eFailure;
+			cout << "failed to create content context for page\n";
+		}
+
+		// place a large red rectangle all over the page
+		AbstractContentContext::GraphicOptions pathFillOptions(AbstractContentContext::eFill,
+			AbstractContentContext::eRGB,
+			0xFF0000);
+		pageContentContext->DrawRectangle(0, 0, 595, 842, pathFillOptions);
+
+		// place the image on top...hopefully we can see soem transparency
+		AbstractContentContext::ImageOptions imageOptions;
+		imageOptions.transformationMethod = AbstractContentContext::eMatrix;
+		imageOptions.matrix[0] = imageOptions.matrix[3] = 0.5;
+        pageContentContext->DrawImage(10, 200, "out_test.png", imageOptions);  // problems reading the file
+        // pageContentContext->DrawImage(10, 200, "/home/kuba/Downloads/800px-3D_Saturn.png", imageOptions);
+
+		status = pdfWriter.EndPageContentContext(pageContentContext);
+		if (status != PDFHummus::eSuccess)
+		{
+			cout << "failed to end page content context\n";
+			break;
+		}
+
+		status = pdfWriter.WritePageAndRelease(page);
+		if (status != PDFHummus::eSuccess)
+		{
+			cout << "failed to write page\n";
+			break;
+		}
+
+
+		status = pdfWriter.EndPDF();
+		if (status != PDFHummus::eSuccess)
+		{
+			cout << "failed in end PDF\n";
+			break;
+		}
+	} while (false);
+	return status;
+}
+
+void help(){
+    using namespace std;
+    
     cout << "Screen/Window Capture program:"<< endl;
     cout << "\
 \n\
@@ -29,7 +228,8 @@ capture -i my_image.png\n\
 }
 
 int main(int argc, char * argv[]){
-
+    using namespace std;
+    
     // Command arguments handling
     std::vector<string> args;
     for (int i = 0; i < argc; ++i) args.emplace_back(argv[i]);
@@ -86,7 +286,8 @@ int main(int argc, char * argv[]){
 
     if (help_){
         help();
-        return 0;
+        savepng("../FallFoliage.ppm");
+        // testpdf();
     }
 
     vpl::PageInfo info(0,0); // image dimensions to be populated by screen capture or test
@@ -110,9 +311,10 @@ int main(int argc, char * argv[]){
     if (ppm_){
         // testing boundary tracing
         info.test_ppm = true;
-        info.width = 1920;
-        info.height = 1200;
-        info.filename = "page_012.ppm";
+        info.width = 270;
+        info.height = 358;
+        // http://cs.colby.edu/courses/F15/cs151-labs/labs/lab04/FallFoliage.ppm
+        info.filename = "../FallFoliage.ppm";
     }
 
     if ((capture_screen_) ||
