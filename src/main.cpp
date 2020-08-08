@@ -273,7 +273,8 @@ int main(int argc, char * argv[]){
         (crop_only_) ||
         (ppm_)){
         // TODO: specify pixels to extract (currently white page RGB(255,255,255)
-        // vpl::boundary_tracing(info, rgbs); // this updates rgbs 
+        savepng(rgbs, info);
+        vpl::boundary_tracing(info, rgbs); // this updates rgbs 
         savepng(rgbs, info);
         savepdf(info);
     }
