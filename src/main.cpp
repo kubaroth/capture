@@ -14,15 +14,11 @@
 #include "capture.h"
 
 
-int savepng(std::string filename, std::vector<vpl::RGB>& rgbs, vpl::PageInfo& info) {
+int savepng(std::vector<vpl::RGB>& rgbs, vpl::PageInfo& info) {
 
-    // auto image = vpl::loadPpm(filename);
 
     int width = info.width;
     int height = info.height;
-
-    std::cout << "w: " << width << " h: "<<height<< std::endl;
-
 
     FILE * fp;
     png_structp png_ptr = NULL;
@@ -41,7 +37,7 @@ int savepng(std::string filename, std::vector<vpl::RGB>& rgbs, vpl::PageInfo& in
     int pixel_size = 3;
     int depth = 8;
 
-    fp = fopen ("out_test.png", "wb");
+    fp = fopen (info.filename.c_str(), "wb");
     if (! fp) {
         throw ("open file failed");
     }
@@ -93,7 +89,7 @@ int savepng(std::string filename, std::vector<vpl::RGB>& rgbs, vpl::PageInfo& in
 }
 
 
-int testpdf(){
+int savepdf(vpl::PageInfo& info){
 
     using namespace std;
 
@@ -102,7 +98,7 @@ int testpdf(){
 
     do
     {
-        status = pdfWriter.StartPDF( "PNGTest_.pdf", ePDFVersion14, LogConfiguration(true, true, "PNGTest_.log"));
+        status = pdfWriter.StartPDF( info.filename+"_.pdf", ePDFVersion14);
         if (status != PDFHummus::eSuccess)
         {
             cout << "failed to start PDF\n";
@@ -129,7 +125,7 @@ int testpdf(){
         AbstractContentContext::ImageOptions imageOptions;
         imageOptions.transformationMethod = AbstractContentContext::eMatrix;
         // imageOptions.matrix[0] = imageOptions.matrix[3] = 0.5;   // scale image by half
-        pageContentContext->DrawImage(0, 0, "out_test.png", imageOptions);  // problems reading the file
+        pageContentContext->DrawImage(0, 0, info.filename, imageOptions);  // problems reading the file
 
         status = pdfWriter.EndPageContentContext(pageContentContext);
         if (status != PDFHummus::eSuccess)
@@ -238,7 +234,6 @@ int main(int argc, char * argv[]){
     if (help_){
         help();
         // savepng("../FallFoliage.ppm");
-        // testpdf();
     }
 
     vpl::PageInfo info(0,0); // image dimensions to be populated by screen capture or test
@@ -265,7 +260,7 @@ int main(int argc, char * argv[]){
         info.width = 270;
         info.height = 358;
         // http://cs.colby.edu/courses/F15/cs151-labs/labs/lab04/FallFoliage.ppm
-        info.filename = "../FallFoliage.ppm";
+        // info.filename = "../FallFoliage.ppm";
     }
 
     if ((capture_screen_) ||
@@ -273,10 +268,9 @@ int main(int argc, char * argv[]){
         (crop_only_) ||
         (ppm_)){
         // TODO: specify pixels to extract (currently white page RGB(255,255,255)
-        // vpl::boundary_tracing(info, rgbs);
-        cout << info.width <<endl;
-        savepng("../FallFoliage.ppm", rgbs, info);
-        testpdf();
+        // vpl::boundary_tracing(info, rgbs); // this updates rgbs 
+        savepng(rgbs, info);
+        savepdf(info);
     }
 
 

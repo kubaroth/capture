@@ -309,7 +309,9 @@ std::vector<RGB> CaptureScreen(PageInfo& info, Window * window = nullptr) {
     }
     XDestroyImage( m );
 
-    Png(filename.str().c_str(), width, height, image);
+    // NOTE: This savePng routine does not work with libpng used in libPdfWriter
+    //       Use it a preview only
+    // Png(filename.str().c_str(), width, height, image);   //save png
 
     delete [] image;
 
@@ -363,7 +365,7 @@ std::vector<RGB> CaptureWindow(vpl::PageInfo& info, const std::string& window_na
 }
 
 
-void test_neighbor_pixels(std::vector<RGB> rgbs, std::vector<RGB*>& to_process, RGB* value, const PageInfo& info){
+void test_neighbor_pixels(std::vector<RGB> rgbs, std::vector<RGB*>& to_process, RGB* value, PageInfo& info){
     using namespace std;
     
     // Test for pixel neigbors
@@ -398,7 +400,7 @@ void test_neighbor_pixels(std::vector<RGB> rgbs, std::vector<RGB*>& to_process, 
 
 }
 ///
-void boundary_tracing(const PageInfo& info, std::vector<RGB>& rgbs){
+void boundary_tracing(PageInfo& info, std::vector<RGB>& rgbs){
     using namespace std;
 
     int width = info.width;
@@ -605,8 +607,16 @@ void boundary_tracing(const PageInfo& info, std::vector<RGB>& rgbs){
     // test_neighbor_pixels(rgbs, to_process, value);
 
     stringstream filename;
+
+    // NOTE: This savePng routine does not work with libpng used in libPdfWriter
     filename << "crop_" << info.page_num << ".png";
-    savePng(rgbs_crop, filename.str(), PageInfo(right-left-1, bottom-top));
+
+    // Update PageInfo
+    info.width = right-left-1;
+    info.height = bottom-top;
+    info.filename = filename.str();
+    rgbs = rgbs_crop;
+    // savePng(rgbs_crop, filename.str(), PageInfo(right-left-1, bottom-top));
 
 }
 } // end namepace vpl
