@@ -110,7 +110,7 @@ int testpdf(){
         }
 
         PDFPage* page = new PDFPage();
-        page->SetMediaBox(PDFRectangle(0, 0, 595, 842));
+        // page->SetMediaBox(PDFRectangle(0, 0, 595, 842));
 
         PageContentContext* pageContentContext = pdfWriter.StartPageContentContext(page);
         if (NULL == pageContentContext)
@@ -120,16 +120,16 @@ int testpdf(){
         }
 
         // place a large red rectangle all over the page
-        AbstractContentContext::GraphicOptions pathFillOptions(AbstractContentContext::eFill,
-            AbstractContentContext::eRGB,
-            0xFF0000);
-        pageContentContext->DrawRectangle(0, 0, 595, 842, pathFillOptions);
+        // AbstractContentContext::GraphicOptions pathFillOptions(AbstractContentContext::eFill,
+        //     AbstractContentContext::eRGB,
+        //     0xFF0000);
+        // pageContentContext->DrawRectangle(0, 0, 595, 842, pathFillOptions);
 
         // place the image on top...hopefully we can see soem transparency
         AbstractContentContext::ImageOptions imageOptions;
         imageOptions.transformationMethod = AbstractContentContext::eMatrix;
-        imageOptions.matrix[0] = imageOptions.matrix[3] = 0.5;
-        pageContentContext->DrawImage(10, 200, "out_test.png", imageOptions);  // problems reading the file
+        // imageOptions.matrix[0] = imageOptions.matrix[3] = 0.5;   // scale image by half
+        pageContentContext->DrawImage(0, 0, "out_test.png", imageOptions);  // problems reading the file
 
         status = pdfWriter.EndPageContentContext(pageContentContext);
         if (status != PDFHummus::eSuccess)
