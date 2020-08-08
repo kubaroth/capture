@@ -13,38 +13,6 @@
 
 #include "capture.h"
 
-typedef struct
-{
-    uint8_t red;
-    uint8_t green;
-    uint8_t blue;
-}
-pixel_t;
-
-typedef struct
-{
-    pixel_t *pixels;
-    size_t width;
-    size_t height;
-}
-bitmap_t;
-    
-/* Given "bitmap", this returns the pixel of bitmap at the point 
-   ("x", "y"). */
-
-static pixel_t * pixel_at (bitmap_t * bitmap, int x, int y)
-{
-    return bitmap->pixels + bitmap->width * y + x;
-}
-
-static int pix (int value, int max)
-{
-    if (value < 0) {
-        return 0;
-    }
-    return (int) (256.0 *((double) (value)/(double) max));
-}
-
 
 int savepng(std::string filename, std::vector<vpl::RGB>& rgbs, vpl::PageInfo& info) {
 
@@ -107,96 +75,21 @@ int savepng(std::string filename, std::vector<vpl::RGB>& rgbs, vpl::PageInfo& in
                   PNG_FILTER_TYPE_DEFAULT);
 
 
-
-    // png_set_packing(png_ptr);
-    // png_set_swap_alpha(png_ptr);
-    ///   // png_set_filler(png_ptr, 0, PNG_FILLER_BEFORE);
-   // png_set_bgr(png_ptr);
-       
-    /* Initialize rows of PNG. */
-    bitmap_t fruit;
-    fruit.width = width;
-    fruit.height = height;
-    fruit.pixels = (pixel_t*)calloc (fruit.width * fruit.height, sizeof (pixel_t));
-    for (y = 0; y < height; y++) {
-        for (x = 0; x < width; x++) {
-            // pixel_t * pixel = pixel_at (& fruit, x, y);
-            // pixel_t * pixel = pixel_at (& fruit, x, y);
-            // pixel->red = pix (x, width);
-            // pixel->green = pix (y, height);
-            
-            // size_t pixel_index = y * width + x;
-            // pixel->red = image[pixel_index];
-            // pixel->green = image[pixel_index+1];
-            // pixel->blue = image[pixel_index+2];
-        }
-    }
-
     row_pointers =  (png_byte**)png_malloc (png_ptr, height * sizeof (png_byte *));
     for (y = 0; y < height; y++) {
         png_byte *row = (png_byte*) png_malloc (png_ptr, sizeof (uint8_t) * width * pixel_size);
         row_pointers[y] = row;
         for (x = 0; x < width; x++) {
-            // pixel_t * pixel = pixel_at (&fruit, x, y);
-            // *row++ = pixel->red;
-            // *row++ = pixel->green;
-            // *row++ = pixel->blue;
-
-              // ->pixels + bitmap->width * y + x;
-            // size_t pixel_index = y * width + x;
-            // *row++ = (uint8_t) image[pixel_index];
-            // *row++ = (uint8_t) image[pixel_index+1];
-            // *row++ = (uint8_t) image[pixel_index+2];
-
             size_t pixel_index = y * width + x;
             *row++ = (uint8_t) rgbs[pixel_index].r;
             *row++ = (uint8_t) rgbs[pixel_index].g;
             *row++ = (uint8_t) rgbs[pixel_index].b;
-
-            
-            // (row[x]) = (uint8_t) image[pixel_index];
-            // (row[x+1]) = (uint8_t) image[pixel_index+1];
-            // (row[x+2]) = (uint8_t) image[pixel_index+2];
-            // std::cout << y << " " << x << " " <<image[pixel_index] << " " << image[pixel_index+1 ]<< " " << image[pixel_index+2] << std::endl;;
         }
-        // std::cout << std::endl;
-        // std::cout << y << std::endl;
     }
-
-    // png_uint_32 k;
-    // int bytes_per_pixel = 3;
-    // png_byte iimage[height][width*bytes_per_pixel];
-    // png_bytep row_pointers[height];
-    // for (k = 0; k < height; k++){
-    //     std::cout << k << " "<<k*width*bytes_per_pixel <<std::endl;
-    //     row_pointers[k] = ( png_bytep )(iimage + k*width*bytes_per_pixel);
-    // }
-    // png_init_io(png_ptr, fp);
-    // png_write_info(png_ptr, info_ptr);
-    // png_write_image(png_ptr, row_pointers);
-    // fclose(fp);
-    
-    // /* Write the image data to "fp". */
-
     png_init_io (png_ptr, fp);
     png_set_rows (png_ptr, info_ptr, row_pointers);
     png_write_png (png_ptr, info_ptr, PNG_TRANSFORM_IDENTITY, NULL);
-
-
-    fclose(fp);
-
-
-    // The routine has successfully written the file, so we set
-       // "status" to a value which indicates success.
-
-    // status = 0;
-    
-    // for (y = 0; y < height; y++) {
-    //     png_free (png_ptr, row_pointers[y]);
-    // }
-    // png_free (png_ptr, row_pointers);
-    
-
+    fclose(fp);  
 }
 
 
@@ -348,7 +241,6 @@ int main(int argc, char * argv[]){
         help();
         // savepng("../FallFoliage.ppm");
         // testpdf();
-        // aaa();
     }
 
     vpl::PageInfo info(0,0); // image dimensions to be populated by screen capture or test
@@ -386,6 +278,7 @@ int main(int argc, char * argv[]){
         // vpl::boundary_tracing(info, rgbs);
         cout << info.width <<endl;
         savepng("../FallFoliage.ppm", rgbs, info);
+        testpdf();        
     }
 
 
