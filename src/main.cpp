@@ -106,7 +106,8 @@ int savepdf(vpl::PageInfo& info){
         }
 
         PDFPage* page = new PDFPage();
-        // page->SetMediaBox(PDFRectangle(0, 0, 595, 842));
+        // set document to the size of the image (setting proportional makes things super small) 
+        page->SetMediaBox(PDFRectangle(0, 0, info.width, info.height));
 
         PageContentContext* pageContentContext = pdfWriter.StartPageContentContext(page);
         if (NULL == pageContentContext)
@@ -123,7 +124,11 @@ int savepdf(vpl::PageInfo& info){
 
         // place the image on top...hopefully we can see soem transparency
         AbstractContentContext::ImageOptions imageOptions;
-        imageOptions.transformationMethod = AbstractContentContext::eMatrix;
+        // too small
+        // imageOptions.transformationMethod = AbstractContentContext::EImageTransformation::eFit;
+        // imageOptions.fitProportional = true;
+
+        // imageOptions.transformationMethod = AbstractContentContext::eMatrix;
         // imageOptions.matrix[0] = imageOptions.matrix[3] = 0.5;   // scale image by half
         pageContentContext->DrawImage(0, 0, info.filename, imageOptions);  // problems reading the file
 
