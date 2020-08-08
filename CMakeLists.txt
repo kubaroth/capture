@@ -16,6 +16,8 @@ ExternalProject_Add(pdfhummus
 add_executable(capture src/main.cpp)
 add_dependencies(capture pdfhummus)
 
+set(CMAKE_CXX_FLAGS "-fpermissive -g -O0")
+
 set (PDFHUMMUS_PATH ${CMAKE_CURRENT_SOURCE_DIR}/install_dir CACHE STRING "Path to PDF-Writer libraries" )
 
 target_link_libraries(capture

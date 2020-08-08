@@ -37,12 +37,23 @@ static pixel_t * pixel_at (bitmap_t * bitmap, int x, int y)
     return bitmap->pixels + bitmap->width * y + x;
 }
 
+static int pix (int value, int max)
+{
+    if (value < 0) {
+        return 0;
+    }
+    return (int) (256.0 *((double) (value)/(double) max));
+}
+
+
 int savepng(std::string filename)
 {
 
     auto image = vpl::loadPpm(filename);
             
     
+    // int width = 20;
+    // int height = 30;
     int width = 270;
     int height = 358;
 
@@ -52,6 +63,7 @@ int savepng(std::string filename)
     png_infop info_ptr = NULL;
     size_t x, y;
     png_byte ** row_pointers = NULL;
+    
     /* "status" contains the return value of this function. At first
        it is set to a value which means 'failure'. When the routine
        has finished its work, it is set to a value which means
@@ -95,52 +107,90 @@ int savepng(std::string filename)
                   PNG_INTERLACE_NONE,
                   PNG_COMPRESSION_TYPE_DEFAULT,
                   PNG_FILTER_TYPE_DEFAULT);
-    
-    /* Initialize rows of PNG. */
 
-    row_pointers = (png_byte**) png_malloc (png_ptr, height * sizeof (png_byte *));
+
+
+    // png_set_packing(png_ptr);
+    // png_set_swap_alpha(png_ptr);
+    ///   // png_set_filler(png_ptr, 0, PNG_FILLER_BEFORE);
+   // png_set_bgr(png_ptr);
+       
+    /* Initialize rows of PNG. */
+    bitmap_t fruit;
+    fruit.width = width;
+    fruit.height = height;
+    fruit.pixels = (pixel_t*)calloc (fruit.width * fruit.height, sizeof (pixel_t));
+    for (y = 0; y < height; y++) {
+        for (x = 0; x < width; x++) {
+            pixel_t * pixel = pixel_at (& fruit, x, y);
+            pixel->red = pix (x, width);
+            pixel->green = pix (y, height);
+        }
+    }
+
+    row_pointers =  (png_byte**)png_malloc (png_ptr, height * sizeof (png_byte *));
     for (y = 0; y < height; y++) {
         png_byte *row = (png_byte*) png_malloc (png_ptr, sizeof (uint8_t) * width * pixel_size);
         row_pointers[y] = row;
         for (x = 0; x < width; x++) {
-            // pixel_t * pixel = pixel_at (bitmap, x, y);
-            // *row++ = pixel->red;
-            // *row++ = pixel->green;
-            // *row++ = pixel->blue;
+            pixel_t * pixel = pixel_at (&fruit, x, y);
+            *row++ = pixel->red;
+            *row++ = pixel->green;
+            *row++ = pixel->blue;
 
-            // bitmap->pixels + bitmap->width * y + x;
-            size_t pixel_index = y * width + x;
-            *row++ = (png_byte) image[pixel_index];
-            *row++ = (png_byte) image[pixel_index+1];
-            *row++ = (png_byte) image[pixel_index+2];
-            // row++;
-            std::cout << y << " " << x << " " <<image[pixel_index] << " " << image[pixel_index+1 ]<< " " << image[pixel_index+2] << std::endl;;
+              // ->pixels + bitmap->width * y + x;
+            // size_t pixel_index = y * width + x;
+            // *row++ = (uint8_t) image[pixel_index];
+            // *row++ = (uint8_t) image[pixel_index+1];
+            // *row++ = (uint8_t) image[pixel_index+2];
+            // *row++;
+            
+            // (row[x]) = (uint8_t) image[pixel_index];
+            // (row[x+1]) = (uint8_t) image[pixel_index+1];
+            // (row[x+2]) = (uint8_t) image[pixel_index+2];
+            // std::cout << y << " " << x << " " <<image[pixel_index] << " " << image[pixel_index+1 ]<< " " << image[pixel_index+2] << std::endl;;
         }
         // std::cout << std::endl;
         // std::cout << y << std::endl;
     }
 
-
+    // png_uint_32 k;
+    // int bytes_per_pixel = 3;
+    // png_byte iimage[height][width*bytes_per_pixel];
+    // png_bytep row_pointers[height];
+    // for (k = 0; k < height; k++){
+    //     std::cout << k << " "<<k*width*bytes_per_pixel <<std::endl;
+    //     row_pointers[k] = ( png_bytep )(iimage + k*width*bytes_per_pixel);
+    // }
+    // png_init_io(png_ptr, fp);
+    // png_write_info(png_ptr, info_ptr);
+    // png_write_image(png_ptr, row_pointers);
+    // fclose(fp);
+    
     // /* Write the image data to "fp". */
 
     png_init_io (png_ptr, fp);
     png_set_rows (png_ptr, info_ptr, row_pointers);
     png_write_png (png_ptr, info_ptr, PNG_TRANSFORM_IDENTITY, NULL);
 
+
+    fclose(fp);
+
+
     /* The routine has successfully written the file, so we set
        "status" to a value which indicates success. */
 
-    status = 0;
+    // status = 0;
     
-    for (y = 0; y < height; y++) {
-        png_free (png_ptr, row_pointers[y]);
-    }
-    png_free (png_ptr, row_pointers);
+    // for (y = 0; y < height; y++) {
+    //     png_free (png_ptr, row_pointers[y]);
+    // }
+    // png_free (png_ptr, row_pointers);
     
 
 }
 
-   
+
 int testpdf(){
 
     using namespace std;
@@ -177,7 +227,8 @@ int testpdf(){
 		AbstractContentContext::ImageOptions imageOptions;
 		imageOptions.transformationMethod = AbstractContentContext::eMatrix;
 		imageOptions.matrix[0] = imageOptions.matrix[3] = 0.5;
-        pageContentContext->DrawImage(10, 200, "out_test.png", imageOptions);  // problems reading the file
+        pageContentContext->DrawImage(10, 200, "/home/kuba/PRJ/capture/__build/out_test.png", imageOptions);  // problems reading the file
+        // pageContentContext->DrawImage(10, 200, "/home/kuba/temp/fruit.png", imageOptions);  // problems reading the file
         // pageContentContext->DrawImage(10, 200, "/home/kuba/Downloads/800px-3D_Saturn.png", imageOptions);
 
 		status = pdfWriter.EndPageContentContext(pageContentContext);
@@ -287,7 +338,8 @@ int main(int argc, char * argv[]){
     if (help_){
         help();
         savepng("../FallFoliage.ppm");
-        // testpdf();
+        testpdf();
+        // aaa();
     }
 
     vpl::PageInfo info(0,0); // image dimensions to be populated by screen capture or test
