@@ -23,13 +23,13 @@ int savepng(std::string filename, std::vector<vpl::RGB>& rgbs, vpl::PageInfo& in
 
     std::cout << "w: " << width << " h: "<<height<< std::endl;
 
-    
+
     FILE * fp;
     png_structp png_ptr = NULL;
     png_infop info_ptr = NULL;
     size_t x, y;
     png_byte ** row_pointers = NULL;
-    
+
     /* "status" contains the return value of this function. At first
        it is set to a value which means 'failure'. When the routine
        has finished its work, it is set to a value which means
@@ -40,7 +40,7 @@ int savepng(std::string filename, std::vector<vpl::RGB>& rgbs, vpl::PageInfo& in
     */
     int pixel_size = 3;
     int depth = 8;
-    
+
     fp = fopen ("out_test.png", "wb");
     if (! fp) {
         throw ("open file failed");
@@ -50,18 +50,18 @@ int savepng(std::string filename, std::vector<vpl::RGB>& rgbs, vpl::PageInfo& in
     if (png_ptr == NULL) {
         throw ("png_create_write_struct_failed");
     }
-    
+
     info_ptr = png_create_info_struct (png_ptr);
     if (info_ptr == NULL) {
         throw ("png_create_info_struct_failed");
     }
-    
+
     /* Set up error handling. */
 
     if (setjmp (png_jmpbuf (png_ptr))) {
         throw ("png_failure");
     }
-    
+
     /* Set image attributes. */
 
     png_set_IHDR (png_ptr,
@@ -89,7 +89,7 @@ int savepng(std::string filename, std::vector<vpl::RGB>& rgbs, vpl::PageInfo& in
     png_init_io (png_ptr, fp);
     png_set_rows (png_ptr, info_ptr, row_pointers);
     png_write_png (png_ptr, info_ptr, PNG_TRANSFORM_IDENTITY, NULL);
-    fclose(fp);  
+    fclose(fp);
 }
 
 
@@ -98,69 +98,67 @@ int testpdf(){
     using namespace std;
 
     PDFWriter pdfWriter;
-	EStatusCode status;
+    EStatusCode status;
 
-	do
-	{
+    do
+    {
         status = pdfWriter.StartPDF( "PNGTest_.pdf", ePDFVersion14, LogConfiguration(true, true, "PNGTest_.log"));
-		if (status != PDFHummus::eSuccess)
-		{
-			cout << "failed to start PDF\n";
-			break;
-		}
+        if (status != PDFHummus::eSuccess)
+        {
+            cout << "failed to start PDF\n";
+            break;
+        }
 
-		PDFPage* page = new PDFPage();
-		page->SetMediaBox(PDFRectangle(0, 0, 595, 842));
+        PDFPage* page = new PDFPage();
+        page->SetMediaBox(PDFRectangle(0, 0, 595, 842));
 
-		PageContentContext* pageContentContext = pdfWriter.StartPageContentContext(page);
-		if (NULL == pageContentContext)
-		{
-			status = PDFHummus::eFailure;
-			cout << "failed to create content context for page\n";
-		}
+        PageContentContext* pageContentContext = pdfWriter.StartPageContentContext(page);
+        if (NULL == pageContentContext)
+        {
+            status = PDFHummus::eFailure;
+            cout << "failed to create content context for page\n";
+        }
 
-		// place a large red rectangle all over the page
-		AbstractContentContext::GraphicOptions pathFillOptions(AbstractContentContext::eFill,
-			AbstractContentContext::eRGB,
-			0xFF0000);
-		pageContentContext->DrawRectangle(0, 0, 595, 842, pathFillOptions);
+        // place a large red rectangle all over the page
+        AbstractContentContext::GraphicOptions pathFillOptions(AbstractContentContext::eFill,
+            AbstractContentContext::eRGB,
+            0xFF0000);
+        pageContentContext->DrawRectangle(0, 0, 595, 842, pathFillOptions);
 
-		// place the image on top...hopefully we can see soem transparency
-		AbstractContentContext::ImageOptions imageOptions;
-		imageOptions.transformationMethod = AbstractContentContext::eMatrix;
-		imageOptions.matrix[0] = imageOptions.matrix[3] = 0.5;
-        pageContentContext->DrawImage(10, 200, "/home/kuba/PRJ/capture/__build/out_test.png", imageOptions);  // problems reading the file
-        // pageContentContext->DrawImage(10, 200, "/home/kuba/temp/fruit.png", imageOptions);  // problems reading the file
-        // pageContentContext->DrawImage(10, 200, "/home/kuba/Downloads/800px-3D_Saturn.png", imageOptions);
+        // place the image on top...hopefully we can see soem transparency
+        AbstractContentContext::ImageOptions imageOptions;
+        imageOptions.transformationMethod = AbstractContentContext::eMatrix;
+        imageOptions.matrix[0] = imageOptions.matrix[3] = 0.5;
+        pageContentContext->DrawImage(10, 200, "out_test.png", imageOptions);  // problems reading the file
 
-		status = pdfWriter.EndPageContentContext(pageContentContext);
-		if (status != PDFHummus::eSuccess)
-		{
-			cout << "failed to end page content context\n";
-			break;
-		}
+        status = pdfWriter.EndPageContentContext(pageContentContext);
+        if (status != PDFHummus::eSuccess)
+        {
+            cout << "failed to end page content context\n";
+            break;
+        }
 
-		status = pdfWriter.WritePageAndRelease(page);
-		if (status != PDFHummus::eSuccess)
-		{
-			cout << "failed to write page\n";
-			break;
-		}
+        status = pdfWriter.WritePageAndRelease(page);
+        if (status != PDFHummus::eSuccess)
+        {
+            cout << "failed to write page\n";
+            break;
+        }
 
 
-		status = pdfWriter.EndPDF();
-		if (status != PDFHummus::eSuccess)
-		{
-			cout << "failed in end PDF\n";
-			break;
-		}
-	} while (false);
-	return status;
+        status = pdfWriter.EndPDF();
+        if (status != PDFHummus::eSuccess)
+        {
+            cout << "failed in end PDF\n";
+            break;
+        }
+    } while (false);
+    return status;
 }
 
 void help(){
     using namespace std;
-    
+
     cout << "Screen/Window Capture program:"<< endl;
     cout << "\
 \n\
@@ -182,7 +180,7 @@ capture -i my_image.png\n\
 
 int main(int argc, char * argv[]){
     using namespace std;
-    
+
     // Command arguments handling
     std::vector<string> args;
     for (int i = 0; i < argc; ++i) args.emplace_back(argv[i]);
@@ -278,7 +276,7 @@ int main(int argc, char * argv[]){
         // vpl::boundary_tracing(info, rgbs);
         cout << info.width <<endl;
         savepng("../FallFoliage.ppm", rgbs, info);
-        testpdf();        
+        testpdf();
     }
 
 
@@ -288,8 +286,6 @@ int main(int argc, char * argv[]){
 
 
     /*
-      setup repo
-    - add saving png
     - add loading
     - convert to single pdf using pdf write
     - enable different formats
