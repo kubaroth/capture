@@ -46,16 +46,14 @@ static int pix (int value, int max)
 }
 
 
-int savepng(std::string filename)
-{
+int savepng(std::string filename, std::vector<vpl::RGB>& rgbs, vpl::PageInfo& info) {
 
-    auto image = vpl::loadPpm(filename);
-            
-    
-    // int width = 20;
-    // int height = 30;
-    int width = 270;
-    int height = 358;
+    // auto image = vpl::loadPpm(filename);
+
+    int width = info.width;
+    int height = info.height;
+
+    std::cout << "w: " << width << " h: "<<height<< std::endl;
 
     
     FILE * fp;
@@ -122,9 +120,15 @@ int savepng(std::string filename)
     fruit.pixels = (pixel_t*)calloc (fruit.width * fruit.height, sizeof (pixel_t));
     for (y = 0; y < height; y++) {
         for (x = 0; x < width; x++) {
-            pixel_t * pixel = pixel_at (& fruit, x, y);
-            pixel->red = pix (x, width);
-            pixel->green = pix (y, height);
+            // pixel_t * pixel = pixel_at (& fruit, x, y);
+            // pixel_t * pixel = pixel_at (& fruit, x, y);
+            // pixel->red = pix (x, width);
+            // pixel->green = pix (y, height);
+            
+            // size_t pixel_index = y * width + x;
+            // pixel->red = image[pixel_index];
+            // pixel->green = image[pixel_index+1];
+            // pixel->blue = image[pixel_index+2];
         }
     }
 
@@ -133,17 +137,22 @@ int savepng(std::string filename)
         png_byte *row = (png_byte*) png_malloc (png_ptr, sizeof (uint8_t) * width * pixel_size);
         row_pointers[y] = row;
         for (x = 0; x < width; x++) {
-            pixel_t * pixel = pixel_at (&fruit, x, y);
-            *row++ = pixel->red;
-            *row++ = pixel->green;
-            *row++ = pixel->blue;
+            // pixel_t * pixel = pixel_at (&fruit, x, y);
+            // *row++ = pixel->red;
+            // *row++ = pixel->green;
+            // *row++ = pixel->blue;
 
               // ->pixels + bitmap->width * y + x;
             // size_t pixel_index = y * width + x;
             // *row++ = (uint8_t) image[pixel_index];
             // *row++ = (uint8_t) image[pixel_index+1];
             // *row++ = (uint8_t) image[pixel_index+2];
-            // *row++;
+
+            size_t pixel_index = y * width + x;
+            *row++ = (uint8_t) rgbs[pixel_index].r;
+            *row++ = (uint8_t) rgbs[pixel_index].g;
+            *row++ = (uint8_t) rgbs[pixel_index].b;
+
             
             // (row[x]) = (uint8_t) image[pixel_index];
             // (row[x+1]) = (uint8_t) image[pixel_index+1];
@@ -177,8 +186,8 @@ int savepng(std::string filename)
     fclose(fp);
 
 
-    /* The routine has successfully written the file, so we set
-       "status" to a value which indicates success. */
+    // The routine has successfully written the file, so we set
+       // "status" to a value which indicates success.
 
     // status = 0;
     
@@ -337,8 +346,8 @@ int main(int argc, char * argv[]){
 
     if (help_){
         help();
-        savepng("../FallFoliage.ppm");
-        testpdf();
+        // savepng("../FallFoliage.ppm");
+        // testpdf();
         // aaa();
     }
 
@@ -374,7 +383,9 @@ int main(int argc, char * argv[]){
         (crop_only_) ||
         (ppm_)){
         // TODO: specify pixels to extract (currently white page RGB(255,255,255)
-        vpl::boundary_tracing(info, rgbs);
+        // vpl::boundary_tracing(info, rgbs);
+        cout << info.width <<endl;
+        savepng("../FallFoliage.ppm", rgbs, info);
     }
 
 
