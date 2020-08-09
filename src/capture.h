@@ -132,7 +132,13 @@ struct RGB{
     // TODO: implement remaing const versions
     bool operator==(const RGB& rhs) const {return (this->r + this->g + this->b == rhs.r + rhs.g + rhs.b) ? true : false;}
     bool operator!=(const RGB& rhs) const {return (!(*this == rhs)) ? true : false;}
-
+    RGB operator-(const RGB& rhs){
+        return RGB(this->r - rhs.r, this->g - rhs.g, this->b - rhs.b);
+    }
+    RGB operator-(int rhs){
+        return RGB(this->r - rhs, this->g - rhs, this->b - rhs);
+    }
+    
     friend std::ostream& operator<<(std:: ostream& ostr, RGB const & rgb){
         ostr << rgb.r<<','<<rgb.g << ','<<rgb.b << " [" << rgb.x <<','<<rgb.y << "] index: "<< rgb.index;
         return ostr;
@@ -449,7 +455,7 @@ void boundary_tracing(PageInfo& info, std::vector<RGB>& rgbs){
     cout << "begin stop index " << stop_index <<endl;
     while (stop_index > 0){
         // first value smaller then the brightest value recorded
-        if ( *(sorted_rgbs[stop_index]) < *(value) ){ // compare values not pointers
+        if ( *(sorted_rgbs[stop_index]) < *(value)-10 ){ // compare values not pointers
             cout << stop_index << " "<<  *sorted_rgbs[stop_index] << " " << *value << " " << (*(sorted_rgbs[stop_index]) > *(value)) << endl;
             break;
         }
@@ -555,56 +561,61 @@ void boundary_tracing(PageInfo& info, std::vector<RGB>& rgbs){
         auto index = g.first;
         auto group_number = g.second;
 
-        if (info.test_ppm){
+        // set colors to show blocks of color
+        // NTEwe need to early exit to get thei values
+        // if (info.test_ppm){
             rgbs[index].r = random_colors[group_number].r;
             rgbs[index].g = random_colors[group_number].g;
             rgbs[index].b = random_colors[group_number].b;
-        }
+        // }
 
         groups_histogram[group_number] += 1;
     }
 
-    // find the group with the largest number
 
-    int max_index = *std::max_element(groups_histogram.begin(),  groups_histogram.end());
-    cout << "total groups: " << groups.size() <<  " max group:" << groups_histogram[max_index] << endl;
 
-    // iterate over largest group and find Bounding box
-    int top = height;
-    int left = width;
-    int bottom = 0;
-    int right = 0;
-    std::vector<RGB> rgbs_crop;
-    for (auto it=groups.begin(); it!=groups.end(); ++it){
-        // cout << page_group << " " << it->second <<endl;
-        if (it->second == groups_histogram[max_index]){
-            auto index = it->first;
-            auto px = rgbs[index];
-            px.r = 0;
-            px.g = 255;
-            px.b = 0;
+    
+    // // find the group with the largest number
 
-            if (px.y < top) top = px.y;
-            if (px.x < left) left = px.x;
-            if (px.y > bottom) bottom = px.y;
-            if (px.x > right) right = px.x;
+    // int max_index = *std::max_element(groups_histogram.begin(),  groups_histogram.end());
+    // cout << "total groups: " << groups.size() <<  " max group:" << groups_histogram[max_index] << endl;
 
-        }
-    }
-    cout << "bbox: " << '[' << left <<','<<top<<"],["<<right<<','<<bottom<<']'<<endl;
-    cout << "imagemagick: " <<right-left<<'x'<<bottom-top<<'+'<<left <<'+'<<top<<endl;
+    // // iterate over largest group and find Bounding box
+    // int top = height;
+    // int left = width;
+    // int bottom = 0;
+    // int right = 0;
+    // std::vector<RGB> rgbs_crop;
+    // for (auto it=groups.begin(); it!=groups.end(); ++it){
+    //     // cout << page_group << " " << it->second <<endl;
+    //     if (it->second == groups_histogram[max_index]){
+    //         auto index = it->first;
+    //         auto px = rgbs[index];
+    //         px.r = 0;
+    //         px.g = 255;
+    //         px.b = 0;
 
-    setRGB(rgbs, RGB(255,0,0, left, top, -1), info);
-    setRGB(rgbs, RGB(255,0,0, right, bottom, -1), info);
+    //         if (px.y < top) top = px.y;
+    //         if (px.x < left) left = px.x;
+    //         if (px.y > bottom) bottom = px.y;
+    //         if (px.x > right) right = px.x;
 
-    // Crop image
-    for (const auto & pixel : rgbs){
-        if ((pixel.x > left) && (pixel.y > top) && (pixel.x < right) && (pixel.y < bottom)){
-            rgbs_crop.emplace_back(pixel);
-        }
-    }
+    //     }
+    // }
+    // cout << "bbox: " << '[' << left <<','<<top<<"],["<<right<<','<<bottom<<']'<<endl;
+    // cout << "imagemagick: " <<right-left<<'x'<<bottom-top<<'+'<<left <<'+'<<top<<endl;
 
-    // test_neighbor_pixels(rgbs, to_process, value);
+    // setRGB(rgbs, RGB(255,0,0, left, top, -1), info);
+    // setRGB(rgbs, RGB(255,0,0, right, bottom, -1), info);
+
+    // // Crop image
+    // for (const auto & pixel : rgbs){
+    //     if ((pixel.x > left) && (pixel.y > top) && (pixel.x < right) && (pixel.y < bottom)){
+    //         rgbs_crop.emplace_back(pixel);
+    //     }
+    // }
+
+    // // test_neighbor_pixels(rgbs, to_process, value);
 
     stringstream filename;
 
@@ -612,10 +623,11 @@ void boundary_tracing(PageInfo& info, std::vector<RGB>& rgbs){
     filename << "crop_" << info.page_num << ".png";
 
     // Update PageInfo
-    info.width = right-left-1;
-    info.height = bottom-top;
+    // info.width = right-left-1;
+    // info.height = bottom-top;
     info.filename = filename.str();
-    rgbs = rgbs_crop;
+    // rgbs = rgbs_crop;
+    savePng(rgbs, "aaa.png", info);
     // savePng(rgbs_crop, filename.str(), PageInfo(right-left-1, bottom-top));
 
 }
