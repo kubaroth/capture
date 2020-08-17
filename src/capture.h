@@ -436,39 +436,16 @@ void boundary_tracing(PageInfo& info, std::vector<RGB>& rgbs){
     assert  (rgbs.size() == width*height);
 
 
-
-    // rgb view with pixels sorted from darkest to brightest
-    std::vector<RGB*> sorted_rgbs;
-    for (auto & pixel : rgbs){
-        sorted_rgbs.emplace_back(&pixel);
-    }
-    std::sort(sorted_rgbs.begin(), sorted_rgbs.end(), compareRGB_Ptrs);
-
-    // find all the pixels with taht value
-    auto value = sorted_rgbs[sorted_rgbs.size()-1];
-    cout << "brightest pixel value: "<<*value <<endl; // brightest pixel value typically (255,255,255) - last in sorted
-
-
-    // Figure out number of brightest pixels
-
-    long stop_index = sorted_rgbs.size()-1;
-    cout << "begin stop index " << stop_index <<endl;
-    while (stop_index > 0){
-        // first value smaller then the brightest value recorded
-        if ( *(sorted_rgbs[stop_index]) < *(value)-10 ){ // compare values not pointers
-            cout << stop_index << " "<<  *sorted_rgbs[stop_index] << " " << *value << " " << (*(sorted_rgbs[stop_index]) > *(value)) << endl;
-            break;
+    unordered_set<RGB*> white_set;
+    auto threshold = RGB(240,240,240, 0, 0, 0);
+    for (auto &px : rgbs){
+        if (px >= threshold){
+            white_set.insert(&px);
         }
-        stop_index--;
     }
 
-    // make a set from the current index value up to the end
-    cout << "stop_index " << stop_index<<endl;
-
-    // Start from the next iterator position (+1)
-    unordered_set<RGB*> white_set (sorted_rgbs.begin()+stop_index+1, sorted_rgbs.end());
-    // vector<RGB*> to_process (sorted_rgbs.begin()+stop_index+1, sorted_rgbs.end());  // different pointers - need to compare values
-
+    cout << "unorderset size " << white_set.size() <<endl;
+    
     // need to reuse same pointers - if we want to compare them
     // (Do we want to compare? - we need to check 2 cases
     // - already visited in the set
