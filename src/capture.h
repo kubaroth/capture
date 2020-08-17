@@ -16,8 +16,9 @@
 
 #include <cassert>
 
-// enable to preview colors - TODO: test if this works
-bool PREVIEW_SEGMENTATION = true;
+// TODO: handline this as a command line parameter
+// enable to preview colors
+bool PREVIEW_SEGMENTATION = false;
 
 namespace vpl{
 /// Encode direction to look up neighbor pixels
@@ -440,6 +441,8 @@ void boundary_tracing(PageInfo& info, std::vector<RGB>& rgbs){
 
 
     unordered_set<RGB*> white_set;
+    // TODO: at the moment we take into the account only bright pixels
+    //       - provide the threshold from the command line
     auto threshold = RGB(240,240,240, 0, 0, 0);
     for (auto &px : rgbs){
         if (px >= threshold){
@@ -514,6 +517,7 @@ void boundary_tracing(PageInfo& info, std::vector<RGB>& rgbs){
                 // setRGB(rgbs, RGB(0,255,0, pixel->x, pixel->y, pixel->index), info); // DEBUG
 
                 groups[pixel->index] = group_number;
+                // TODO: for easier lookup pixel group we may want to store this aa an atribute
                 cue.pop();
 
             } // queue end
@@ -546,7 +550,6 @@ void boundary_tracing(PageInfo& info, std::vector<RGB>& rgbs){
         auto group_number = g.second;
 
         // set colors to show blocks of color
-        // NTEwe need to early exit to get thei values
         if ( PREVIEW_SEGMENTATION ) {
             rgbs[index].r = random_colors[group_number].r;
             rgbs[index].g = random_colors[group_number].g;
@@ -555,72 +558,23 @@ void boundary_tracing(PageInfo& info, std::vector<RGB>& rgbs){
 
         groups_histogram[group_number] += 1;
     }
-
-
-    // for(auto g : groups_histogram){
-    //     cout << g << ' ';
-    // }
-    // cout << endl;
-
-    
-    
-    auto ghsort = groups_histogram;
-    sort(ghsort.begin(), ghsort.end());
-    cout << ghsort[ghsort.size() - 1]<<endl;  // group with max elements
-    cout << ghsort[ghsort.size() - 2]<<endl;  // second largest
-
-    // find group number with max elements
-
-    int total_pixels_in_group = ghsort[ghsort.size() - 1];
-
-
-
-    // cout << "AAA "<< gnumber <<endl;
-
-    
     
     // find the group with the largest number
 
-    // this will always return 0 - unvisited
-    // we need to remove all entries which points to group 0. This most likely dominates hisotogram
-
-
-
-    // NOTE: This is not working - as it the max value not the index
     int max_index = std::distance(groups_histogram.begin(),std::max_element(groups_histogram.begin(),  groups_histogram.end()));
-    cout << "max " << max_index <<endl;
-
-    max_index = 0;
-    for (auto & total_values : groups_histogram){
-        if (total_values == total_pixels_in_group)
-            break;
-        max_index++;
-    }
-
     
     cout << "total groups: " << groups.size() << " max_index "<< max_index << " total elements in max group:" << groups_histogram[max_index] << endl;
 
-    // optional - color  the the max group - NOTE this does not work, iterate over groups instead
-    // for (auto & px : rgbs){
-    //     // if (px.index != max_index)
-    //         // continue;
-    //     cout << px.index << " ";
-    //     px.r = 255;
-    //     px.g = 0;
-    //     px.b = 0;
-    // }
-
-    
-    for (auto & _pair : groups){ // this is maping pixel to group in the entire image
-        if (_pair.second != max_index)
-            continue;
-        // cout << rgbs[_pair.first].index << " " << max_index << '|' ;  // not the same
-        rgbs[_pair.first].r = 255;
-        rgbs[_pair.first].g = 0;
-        rgbs[_pair.first].b = 0;
-        
+    // A the momoment we dont store group number on the pixel, need to access it thru the map 
+    if (PREVIEW_SEGMENTATION){
+        for (auto & _pair : groups){ // this is maping pixel to group in the entire image
+            if (_pair.second != max_index)
+                continue;
+            rgbs[_pair.first].r = 255;
+            rgbs[_pair.first].g = 0;
+            rgbs[_pair.first].b = 0;
+        }
     }
-
     
     // iterate over largest group and find Bounding box
     int top = height;
@@ -631,7 +585,7 @@ void boundary_tracing(PageInfo& info, std::vector<RGB>& rgbs){
     for (auto it=groups.begin(); it!=groups.end(); ++it){
         // if (it->second == 0)
         //     continue;
-        if (it->second == groups_histogram[max_index]){
+        if (it->second == max_index){
             auto index = it->first;
             auto px = rgbs[index];
             px.r = 0;

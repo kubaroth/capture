@@ -86,6 +86,7 @@ int savepng(std::vector<vpl::RGB>& rgbs, vpl::PageInfo& info) {
     png_set_rows (png_ptr, info_ptr, row_pointers);
     png_write_png (png_ptr, info_ptr, PNG_TRANSFORM_IDENTITY, NULL);
     fclose(fp);
+    return 0;
 }
 
 
