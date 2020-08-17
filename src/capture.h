@@ -566,12 +566,12 @@ void boundary_tracing(PageInfo& info, std::vector<RGB>& rgbs){
     
     auto ghsort = groups_histogram;
     sort(ghsort.begin(), ghsort.end());
-    cout << ghsort[ghsort.size() - 1]<<endl;  // default 
-    cout << ghsort[ghsort.size() - 2]<<endl;  // group with max elements
+    cout << ghsort[ghsort.size() - 1]<<endl;  // group with max elements
+    cout << ghsort[ghsort.size() - 2]<<endl;  // second largest
 
     // find group number with max elements
 
-    int total_pixels_in_group = ghsort[ghsort.size() - 2];
+    int total_pixels_in_group = ghsort[ghsort.size() - 1];
 
 
 
@@ -586,10 +586,11 @@ void boundary_tracing(PageInfo& info, std::vector<RGB>& rgbs){
 
 
 
+    // NOTE: This is not working - as it the max value not the index
+    int max_index = std::distance(groups_histogram.begin(),std::max_element(groups_histogram.begin(),  groups_histogram.end()));
+    cout << "max " << max_index <<endl;
 
-    // int max_index = *std::max_element(groups_histogram.begin(),  groups_histogram.end());
-
-    int max_index = 0;
+    max_index = 0;
     for (auto & total_values : groups_histogram){
         if (total_values == total_pixels_in_group)
             break;
@@ -613,10 +614,11 @@ void boundary_tracing(PageInfo& info, std::vector<RGB>& rgbs){
     for (auto & _pair : groups){ // this is maping pixel to group in the entire image
         if (_pair.second != max_index)
             continue;
-        // cout << px.index << " ";
+        // cout << rgbs[_pair.first].index << " " << max_index << '|' ;  // not the same
         rgbs[_pair.first].r = 255;
         rgbs[_pair.first].g = 0;
         rgbs[_pair.first].b = 0;
+        
     }
 
     
