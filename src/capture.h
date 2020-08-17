@@ -16,6 +16,9 @@
 
 #include <cassert>
 
+// enable to preview colors - TODO: test if this works
+bool PREVIEW_SEGMENTATION = true;
+
 namespace vpl{
 /// Encode direction to look up neighbor pixels
 enum Direction {up, right, down, left};
@@ -463,6 +466,8 @@ void boundary_tracing(PageInfo& info, std::vector<RGB>& rgbs){
 
 
     std::queue<RGB*> cue;
+    // NOTE: in this initilaliztion all pixels get goup 0
+    //       we need to exclude that
     std::unordered_map<long, int> groups;
     int group_number = 0;
 
@@ -518,7 +523,7 @@ void boundary_tracing(PageInfo& info, std::vector<RGB>& rgbs){
 
         }
         else {
-            // cout << "alrady visisted" <<endl;
+            // cout << "already visisted" <<endl;
         }
 
     }
@@ -533,6 +538,8 @@ void boundary_tracing(PageInfo& info, std::vector<RGB>& rgbs){
         random_colors.emplace_back(RGB(r,g,b));
     }
 
+    std::cout << "total groups: " << groups.size() <<endl;
+    
     std::vector<int> groups_histogram(groups.size());
     for (auto g : groups){
         auto index = g.first;
@@ -540,72 +547,135 @@ void boundary_tracing(PageInfo& info, std::vector<RGB>& rgbs){
 
         // set colors to show blocks of color
         // NTEwe need to early exit to get thei values
-        // if (info.test_ppm){
+        if ( PREVIEW_SEGMENTATION ) {
             rgbs[index].r = random_colors[group_number].r;
             rgbs[index].g = random_colors[group_number].g;
             rgbs[index].b = random_colors[group_number].b;
-        // }
+        }
 
         groups_histogram[group_number] += 1;
     }
 
 
+    // for(auto g : groups_histogram){
+    //     cout << g << ' ';
+    // }
+    // cout << endl;
 
     
-    // // find the group with the largest number
+    
+    auto ghsort = groups_histogram;
+    sort(ghsort.begin(), ghsort.end());
+    cout << ghsort[ghsort.size() - 1]<<endl;  // default 
+    cout << ghsort[ghsort.size() - 2]<<endl;  // group with max elements
+
+    // find group number with max elements
+
+    int total_pixels_in_group = ghsort[ghsort.size() - 2];
+
+
+
+    // cout << "AAA "<< gnumber <<endl;
+
+    
+    
+    // find the group with the largest number
+
+    // this will always return 0 - unvisited
+    // we need to remove all entries which points to group 0. This most likely dominates hisotogram
+
+
+
 
     // int max_index = *std::max_element(groups_histogram.begin(),  groups_histogram.end());
-    // cout << "total groups: " << groups.size() <<  " max group:" << groups_histogram[max_index] << endl;
 
-    // // iterate over largest group and find Bounding box
-    // int top = height;
-    // int left = width;
-    // int bottom = 0;
-    // int right = 0;
-    // std::vector<RGB> rgbs_crop;
-    // for (auto it=groups.begin(); it!=groups.end(); ++it){
-    //     // cout << page_group << " " << it->second <<endl;
-    //     if (it->second == groups_histogram[max_index]){
-    //         auto index = it->first;
-    //         auto px = rgbs[index];
-    //         px.r = 0;
-    //         px.g = 255;
-    //         px.b = 0;
+    int max_index = 0;
+    for (auto & total_values : groups_histogram){
+        if (total_values == total_pixels_in_group)
+            break;
+        max_index++;
+    }
 
-    //         if (px.y < top) top = px.y;
-    //         if (px.x < left) left = px.x;
-    //         if (px.y > bottom) bottom = px.y;
-    //         if (px.x > right) right = px.x;
+    
+    cout << "total groups: " << groups.size() << " max_index "<< max_index << " total elements in max group:" << groups_histogram[max_index] << endl;
 
-    //     }
+    // optional - color  the the max group - NOTE this does not work, iterate over groups instead
+    // for (auto & px : rgbs){
+    //     // if (px.index != max_index)
+    //         // continue;
+    //     cout << px.index << " ";
+    //     px.r = 255;
+    //     px.g = 0;
+    //     px.b = 0;
     // }
-    // cout << "bbox: " << '[' << left <<','<<top<<"],["<<right<<','<<bottom<<']'<<endl;
-    // cout << "imagemagick: " <<right-left<<'x'<<bottom-top<<'+'<<left <<'+'<<top<<endl;
 
-    // setRGB(rgbs, RGB(255,0,0, left, top, -1), info);
-    // setRGB(rgbs, RGB(255,0,0, right, bottom, -1), info);
+    
+    for (auto & _pair : groups){ // this is maping pixel to group in the entire image
+        if (_pair.second != max_index)
+            continue;
+        // cout << px.index << " ";
+        rgbs[_pair.first].r = 255;
+        rgbs[_pair.first].g = 0;
+        rgbs[_pair.first].b = 0;
+    }
 
-    // // Crop image
-    // for (const auto & pixel : rgbs){
-    //     if ((pixel.x > left) && (pixel.y > top) && (pixel.x < right) && (pixel.y < bottom)){
-    //         rgbs_crop.emplace_back(pixel);
-    //     }
-    // }
+    
+    // iterate over largest group and find Bounding box
+    int top = height;
+    int left = width;
+    int bottom = 0;
+    int right = 0;
+    std::vector<RGB> rgbs_crop;
+    for (auto it=groups.begin(); it!=groups.end(); ++it){
+        // if (it->second == 0)
+        //     continue;
+        if (it->second == groups_histogram[max_index]){
+            auto index = it->first;
+            auto px = rgbs[index];
+            px.r = 0;
+            px.g = 255;
+            px.b = 0;
+
+            if (px.y < top) top = px.y;
+            if (px.x < left) left = px.x;
+            if (px.y > bottom) bottom = px.y;
+            if (px.x > right) right = px.x;
+
+        }
+    }
+    cout << "bbox: " << '[' << left <<','<<top<<"],["<<right<<','<<bottom<<']'<<endl;
+    cout << "imagemagick: " <<right-left<<'x'<<bottom-top<<'+'<<left <<'+'<<top<<endl;
+
+    setRGB(rgbs, RGB(255,0,0, left, top, -1), info);
+    setRGB(rgbs, RGB(255,0,0, right, bottom, -1), info);
+
+    // Crop image
+    for (const auto & pixel : rgbs){
+        if ((pixel.x > left) && (pixel.y > top) && (pixel.x < right) && (pixel.y < bottom)){
+            rgbs_crop.emplace_back(pixel);
+        }
+    }
 
     // // test_neighbor_pixels(rgbs, to_process, value);
 
+    if (PREVIEW_SEGMENTATION) {
+        savePng(rgbs, "aaa.png", info);
+        return;
+    }
+    
     stringstream filename;
 
     // NOTE: This savePng routine does not work with libpng used in libPdfWriter
     filename << "crop_" << info.page_num << ".png";
 
-    // Update PageInfo
-    // info.width = right-left-1;
-    // info.height = bottom-top;
     info.filename = filename.str();
-    // rgbs = rgbs_crop;
-    savePng(rgbs, "aaa.png", info);
-    // savePng(rgbs_crop, filename.str(), PageInfo(right-left-1, bottom-top));
+    
+    // Update PageInfo
+    info.width = right-left-1;
+    info.height = bottom-top;
+
+    rgbs = rgbs_crop;
+    savePng(rgbs_crop, filename.str(), PageInfo(right-left-1, bottom-top));
 
 }
 } // end namepace vpl
