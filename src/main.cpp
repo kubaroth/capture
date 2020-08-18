@@ -170,6 +170,7 @@ void help(){
              and saved with crop filename.\n\
 -cw -window: Captures selected window followed by a crop to keep only the brightest pixels\n\
 -ppm       : Runs test on page_012.ppm image\n\
+-preview-segments: color code all found regions. Color largest region as red\n\
 -i -image  : Takes the input image and calculates crop\n\
 \n\
 Example:\n\
@@ -192,6 +193,7 @@ int main(int argc, char * argv[]){
     bool capture_window_ = false;
     bool ppm_ = false;
     bool crop_only_ = false;
+    bool preview_segments_ = false;
 
     std::string crop_input_image_ = "";
     std::string window_name_ = "";
@@ -235,6 +237,11 @@ int main(int argc, char * argv[]){
         ppm_ = true;
     }
 
+    if (vpl::cmdOptionExists(args, "-preview-segments")){
+        help_ = false;
+        preview_segments_ = true;
+    }
+    
     // end of argument handling
 
     if (help_){
@@ -267,6 +274,10 @@ int main(int argc, char * argv[]){
         info.height = 358;
         // http://cs.colby.edu/courses/F15/cs151-labs/labs/lab04/FallFoliage.ppm
         // info.filename = "../FallFoliage.ppm";
+    }
+
+    if (preview_segments_){
+        info.preview_segments = true;
     }
 
     if ((capture_screen_) ||

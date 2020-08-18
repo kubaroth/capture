@@ -16,10 +16,6 @@
 
 #include <cassert>
 
-// TODO: handline this as a command line parameter
-// enable to preview colors
-bool PREVIEW_SEGMENTATION = false;
-
 namespace vpl{
 /// Encode direction to look up neighbor pixels
 enum Direction {up, right, down, left};
@@ -113,6 +109,7 @@ struct PageInfo{
     std::string filename = "";
     int page_num = 0;
     bool test_ppm=false;
+    bool preview_segments=false;
     PageInfo(int w, int h) : width(w), height(h) {}
 };
 
@@ -550,7 +547,7 @@ void boundary_tracing(PageInfo& info, std::vector<RGB>& rgbs){
         auto group_number = g.second;
 
         // set colors to show blocks of color
-        if ( PREVIEW_SEGMENTATION ) {
+        if (info.preview_segments) {
             rgbs[index].r = random_colors[group_number].r;
             rgbs[index].g = random_colors[group_number].g;
             rgbs[index].b = random_colors[group_number].b;
@@ -566,7 +563,7 @@ void boundary_tracing(PageInfo& info, std::vector<RGB>& rgbs){
     cout << "total groups: " << groups.size() << " max_index "<< max_index << " total elements in max group:" << groups_histogram[max_index] << endl;
 
     // A the momoment we dont store group number on the pixel, need to access it thru the map 
-    if (PREVIEW_SEGMENTATION){
+    if (info.preview_segments){
         for (auto & _pair : groups){ // this is maping pixel to group in the entire image
             if (_pair.second != max_index)
                 continue;
@@ -614,8 +611,8 @@ void boundary_tracing(PageInfo& info, std::vector<RGB>& rgbs){
 
     // // test_neighbor_pixels(rgbs, to_process, value);
 
-    if (PREVIEW_SEGMENTATION) {
-        savePng(rgbs, "aaa.png", info);
+    if (info.preview_segments) {
+        savePng(rgbs, "preview_segments.png", info);
         return;
     }
     
