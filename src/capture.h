@@ -197,6 +197,83 @@ void savePng(const std::vector<RGB>& rgbs, const std::string& name, const PageIn
 
 }
 
+
+int savepng(std::vector<vpl::RGB>& rgbs, vpl::PageInfo& info) {
+
+
+    int width = info.width;
+    int height = info.height;
+
+    FILE * fp;
+    png_structp png_ptr = NULL;
+    png_infop info_ptr = NULL;
+    size_t x, y;
+    png_byte ** row_pointers = NULL;
+
+    /* "status" contains the return value of this function. At first
+       it is set to a value which means 'failure'. When the routine
+       has finished its work, it is set to a value which means
+       'success'. */
+    int status = -1;
+    /* The following number is set by trial and error only. I cannot
+       see where it it is documented in the libpng manual.
+    */
+    int pixel_size = 3;
+    int depth = 8;
+
+    fp = fopen (info.filename.c_str(), "wb");
+    if (! fp) {
+        throw ("open file failed");
+    }
+
+    png_ptr = png_create_write_struct (PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+    if (png_ptr == NULL) {
+        throw ("png_create_write_struct_failed");
+    }
+
+    info_ptr = png_create_info_struct (png_ptr);
+    if (info_ptr == NULL) {
+        throw ("png_create_info_struct_failed");
+    }
+
+    /* Set up error handling. */
+
+    if (setjmp (png_jmpbuf (png_ptr))) {
+        throw ("png_failure");
+    }
+
+    /* Set image attributes. */
+
+    png_set_IHDR (png_ptr,
+                  info_ptr,
+                  width,
+                  height,
+                  depth,
+                  PNG_COLOR_TYPE_RGB,
+                  PNG_INTERLACE_NONE,
+                  PNG_COMPRESSION_TYPE_DEFAULT,
+                  PNG_FILTER_TYPE_DEFAULT);
+
+
+    row_pointers =  (png_byte**)png_malloc (png_ptr, height * sizeof (png_byte *));
+    for (y = 0; y < height; y++) {
+        png_byte *row = (png_byte*) png_malloc (png_ptr, sizeof (uint8_t) * width * pixel_size);
+        row_pointers[y] = row;
+        for (x = 0; x < width; x++) {
+            size_t pixel_index = y * width + x;
+            *row++ = (uint8_t) rgbs[pixel_index].r;
+            *row++ = (uint8_t) rgbs[pixel_index].g;
+            *row++ = (uint8_t) rgbs[pixel_index].b;
+        }
+    }
+    png_init_io (png_ptr, fp);
+    png_set_rows (png_ptr, info_ptr, row_pointers);
+    png_write_png (png_ptr, info_ptr, PNG_TRANSFORM_IDENTITY, NULL);
+    fclose(fp);
+    return 0;
+}
+
+
 /// TODO: to implment but probably use the library instead (see comment above)
 std::vector<RGB> loadPng(const std::string& input_path){
     std::vector<RGB> rgbs;
@@ -235,6 +312,67 @@ std::vector<int>&& loadPpm(const std::string& path){
     return std::move(*image);
 }
 
+int savepdf(vpl::PageInfo& info){
+
+    using namespace std;
+
+    PDFWriter pdfWriter;
+    EStatusCode status;
+
+    do
+    {
+        status = pdfWriter.StartPDF( info.filename+"_.pdf", ePDFVersion14);
+        if (status != PDFHummus::eSuccess)
+        {
+            cout << "failed to start PDF\n";
+            break;
+        }
+
+        PDFPage* page = new PDFPage();
+        // set document to the size of the image (setting proportional makes things super small) 
+        page->SetMediaBox(PDFRectangle(0, 0, info.width, info.height));
+
+        PageContentContext* pageContentContext = pdfWriter.StartPageContentContext(page);
+        if (NULL == pageContentContext)
+        {
+            status = PDFHummus::eFailure;
+            cout << "failed to create content context for page\n";
+        }
+
+        // place the image on top...hopefully we can see soem transparency
+        AbstractContentContext::ImageOptions imageOptions;
+        // too small
+        // imageOptions.transformationMethod = AbstractContentContext::EImageTransformation::eFit;
+        // imageOptions.fitProportional = true;
+
+        // imageOptions.transformationMethod = AbstractContentContext::eMatrix;
+        // imageOptions.matrix[0] = imageOptions.matrix[3] = 0.5;   // scale image by half
+        pageContentContext->DrawImage(0, 0, info.filename, imageOptions);  // problems reading the file
+
+        status = pdfWriter.EndPageContentContext(pageContentContext);
+        if (status != PDFHummus::eSuccess)
+        {
+            cout << "failed to end page content context\n";
+            break;
+        }
+
+        status = pdfWriter.WritePageAndRelease(page);
+        if (status != PDFHummus::eSuccess)
+        {
+            cout << "failed to write page\n";
+            break;
+        }
+
+
+        status = pdfWriter.EndPDF();
+        if (status != PDFHummus::eSuccess)
+        {
+            cout << "failed in end PDF\n";
+            break;
+        }
+    } while (false);
+    return status;
+}
 
 /// Capture
 
