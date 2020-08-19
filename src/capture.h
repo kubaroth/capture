@@ -102,7 +102,7 @@ struct Png {
     Png& operator>>(unsigned int v) {return *this<<(v>>24)<<(v>>16)<<(v>>8)<<v;}
 };
 
-/// A simple struc to pass around various bits and pieces 
+/// A simple struc to pass around various bits and pieces
 struct PageInfo{
     int width;
     int height;
@@ -111,6 +111,7 @@ struct PageInfo{
     bool test_ppm=false;
     bool preview_segments=false;
     PageInfo(int w, int h) : width(w), height(h) {}
+    PageInfo() : width(0), height(0) {} // uninitialized dimensions
 };
 
 /// RGB
@@ -139,7 +140,7 @@ struct RGB{
     RGB operator-(int rhs){
         return RGB(this->r - rhs, this->g - rhs, this->b - rhs);
     }
-    
+
     friend std::ostream& operator<<(std:: ostream& ostr, RGB const & rgb){
         ostr << rgb.r<<','<<rgb.g << ','<<rgb.b << " [" << rgb.x <<','<<rgb.y << "] index: "<< rgb.index;
         return ostr;
@@ -203,6 +204,9 @@ int savepng(std::vector<vpl::RGB>& rgbs, vpl::PageInfo& info) {
 
     int width = info.width;
     int height = info.height;
+
+    assert (width > 0);
+    assert (height > 0);
 
     FILE * fp;
     png_structp png_ptr = NULL;
@@ -283,7 +287,7 @@ std::vector<RGB> loadPng(const std::string& input_path){
 /// Used only to test segmentation without taking a screenshot each time.
 std::vector<int>&& loadPpm(const std::string& path){
     using namespace std;
-    
+
     std::ifstream ii(path, ifstream::binary);
 
 
@@ -329,7 +333,7 @@ int savepdf(vpl::PageInfo& info){
         }
 
         PDFPage* page = new PDFPage();
-        // set document to the size of the image (setting proportional makes things super small) 
+        // set document to the size of the image (setting proportional makes things super small)
         page->SetMediaBox(PDFRectangle(0, 0, info.width, info.height));
 
         PageContentContext* pageContentContext = pdfWriter.StartPageContentContext(page);
@@ -378,10 +382,10 @@ int savepdf(vpl::PageInfo& info){
 
 /// Captures screen - by default entire screen but can be configured to
 /// just capture selection
-std::vector<RGB> CaptureScreen(PageInfo& info, Window * window = nullptr) {
+std::vector<RGB> capture_screen(PageInfo& info, Window * window = nullptr) {
 
     using namespace std;
-    
+
     // Bump file name to the next avaialble digit;
     auto list = glob("page_capture*.png");
     int total_files = list.size();
@@ -464,9 +468,9 @@ std::vector<RGB> CaptureScreen(PageInfo& info, Window * window = nullptr) {
 }
 
 /// Captures just a specified window - this is what we are ultimately after
-std::vector<RGB> CaptureWindow(vpl::PageInfo& info, const std::string& window_name){
+std::vector<RGB> capture_window(vpl::PageInfo& info, const std::string& window_name){
     using namespace std;
-    
+
     Display *display = XOpenDisplay(NULL);
 
     Window rootWindow = RootWindow(display, DefaultScreen(display));
@@ -503,7 +507,7 @@ std::vector<RGB> CaptureWindow(vpl::PageInfo& info, const std::string& window_na
             info.width = xwa.width;
             info.height = xwa.height;
 
-            rgbs = vpl::CaptureScreen(info, &list[i]);
+            rgbs = vpl::capture_screen(info, &list[i]);
         }
     }
     return rgbs;
@@ -512,7 +516,7 @@ std::vector<RGB> CaptureWindow(vpl::PageInfo& info, const std::string& window_na
 
 void test_neighbor_pixels(std::vector<RGB> rgbs, std::vector<RGB*>& to_process, RGB* value, PageInfo& info){
     using namespace std;
-    
+
     // Test for pixel neigbors
     cout << "to_process:" << to_process[0] <<endl;
 
@@ -544,8 +548,14 @@ void test_neighbor_pixels(std::vector<RGB> rgbs, std::vector<RGB*>& to_process, 
     savePng(rgbs, "test_neighbor_pixels.png", info);
 
 }
+
 ///
-void boundary_tracing(PageInfo& info, std::vector<RGB>& rgbs){
+struct SegmentsInfo{
+    std::unordered_map<long, int> groups;
+    int group_index;
+};
+
+SegmentsInfo boundary_tracing(PageInfo& info, std::vector<RGB>& rgbs){
     using namespace std;
 
     int width = info.width;
@@ -586,7 +596,7 @@ void boundary_tracing(PageInfo& info, std::vector<RGB>& rgbs){
     }
 
     cout << "unorderset size " << white_set.size() <<endl;
-    
+
     // need to reuse same pointers - if we want to compare them
     // (Do we want to compare? - we need to check 2 cases
     // - already visited in the set
@@ -678,7 +688,7 @@ void boundary_tracing(PageInfo& info, std::vector<RGB>& rgbs){
     }
 
     std::cout << "total groups: " << groups.size() <<endl;
-    
+
     std::vector<int> groups_histogram(groups.size());
     for (auto g : groups){
         auto index = g.first;
@@ -693,14 +703,14 @@ void boundary_tracing(PageInfo& info, std::vector<RGB>& rgbs){
 
         groups_histogram[group_number] += 1;
     }
-    
+
     // find the group with the largest number
 
     int max_index = std::distance(groups_histogram.begin(),std::max_element(groups_histogram.begin(),  groups_histogram.end()));
-    
+
     cout << "total groups: " << groups.size() << " max_index "<< max_index << " total elements in max group:" << groups_histogram[max_index] << endl;
 
-    // A the momoment we dont store group number on the pixel, need to access it thru the map 
+    // A the momoment we dont store group number on the pixel, need to access it thru the map
     if (info.preview_segments){
         for (auto & _pair : groups){ // this is maping pixel to group in the entire image
             if (_pair.second != max_index)
@@ -710,10 +720,21 @@ void boundary_tracing(PageInfo& info, std::vector<RGB>& rgbs){
             rgbs[_pair.first].b = 0;
         }
     }
-    
+    SegmentsInfo seg_info;
+    seg_info.groups = groups;
+    seg_info.group_index = max_index;
+    return seg_info;
+}
+
+void crop(PageInfo& info, std::vector<RGB>& rgbs, SegmentsInfo const & seg_info ){
+    using namespace std;
+
+    auto groups = seg_info.groups;
+    auto max_index = seg_info.group_index;
+
     // iterate over largest group and find Bounding box
-    int top = height;
-    int left = width;
+    int top = info.height;
+    int left = info.width;
     int bottom = 0;
     int right = 0;
     std::vector<RGB> rgbs_crop;
@@ -753,14 +774,14 @@ void boundary_tracing(PageInfo& info, std::vector<RGB>& rgbs){
         savePng(rgbs, "preview_segments.png", info);
         return;
     }
-    
+
     stringstream filename;
 
     // NOTE: This savePng routine does not work with libpng used in libPdfWriter
     filename << "crop_" << info.page_num << ".png";
 
     info.filename = filename.str();
-    
+
     // Update PageInfo
     info.width = right-left-1;
     info.height = bottom-top;
@@ -770,4 +791,3 @@ void boundary_tracing(PageInfo& info, std::vector<RGB>& rgbs){
 
 }
 } // end namepace vpl
-

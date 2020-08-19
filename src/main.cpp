@@ -16,7 +16,7 @@
 void help(){
     using namespace std;
 
-    cout << "Screen/Window Capture program:"<< endl;
+    cout << "Screen/Window Capture command line tool:"<< endl;
     cout << "\
 \n\
 -h/no args : Prints this message.\n\
@@ -103,15 +103,17 @@ int main(int argc, char * argv[]){
         help();
     }
 
-    vpl::PageInfo info(0,0); // image dimensions to be populated by screen capture or test
+    vpl::PageInfo info; // image dimensions to be populated by screen capture or test
     std::vector<vpl::RGB> rgbs;
 
     if(capture_screen_){
-        rgbs = vpl::CaptureScreen(info, nullptr /*rootWindow*/);
+        rgbs = vpl::capture_screen(info, nullptr /*rootWindow*/);
+        vpl::savepng(rgbs, info);
     }
 
     if(capture_window_){
-        rgbs = vpl::CaptureWindow(info, window_name_);
+        rgbs = vpl::capture_window(info, window_name_);
+        vpl::savepng(rgbs, info);
     }
 
     if(crop_only_){
@@ -138,9 +140,8 @@ int main(int argc, char * argv[]){
         (capture_window_) ||
         (crop_only_) ||
         (ppm_)){
-        // TODO: specify pixels to extract (currently white page RGB(255,255,255)
-        vpl::savepng(rgbs, info);
-        vpl::boundary_tracing(info, rgbs); // this updates rgbs 
+        vpl::SegmentsInfo seg_info = vpl::boundary_tracing(info, rgbs); // this updates rgbs
+        vpl::crop(info, rgbs, seg_info); // this updates rgbs 
         vpl::savepng(rgbs, info);
         vpl::savepdf(info);
     }
