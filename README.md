@@ -37,6 +37,6 @@ Preview the largest segment to capture from specified window:
 - enable different formats
 
 ## Dependencies
-- X11
+- X11  (apt install libx11-dev/stable)
 - PDF-Writer (https://github.com/galkahana/PDF-Writer.git)
 

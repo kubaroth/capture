@@ -1,7 +1,3 @@
-// g++ main.cpp -I. -g -O0 -lX11
-
-// $ sudo apt install libx11-dev/stable
-
 #include <iostream>
 
 #include "../install_dir/include/PDFWriter/PDFWriter.h"
@@ -12,6 +8,7 @@
 #include "../install_dir/include/LibPng/png.h"
 
 #include "capture.h"
+#include "pdf.h"
 
 void help(){
     using namespace std;
