@@ -29,6 +29,9 @@ Preview the largest segment to capture from specified window:
 ./capture -cw Chromium -preview-segments
 ```
 
+## Testing
+Can be run either by running directly individual test or by running ctest.
+
 ## TODO
 - skip x11 and add option to apply crop and generated pdf to an input png file
 - add png loader

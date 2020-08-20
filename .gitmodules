@@ -1,3 +1,6 @@
 [submodule "pdfwriter"]
 	path = pdfwriter
 	url = https://github.com/kubaroth/PDF-Writer.git
+[submodule "Catch2"]
+	path = Catch2
+	url = https://github.com/catchorg/Catch2.git

@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.10)
 project(capture)
 
+enable_testing()
+
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 include(ExternalProject)
@@ -30,3 +32,7 @@ target_link_libraries(capture
   ${PDFHUMMUS_PATH}/lib/libZlib.a
   X11
   )
+
+add_executable(test1 tests/mainimport.cpp tests/test1.cpp)
+add_test(NAME "test1" COMMAND "test1")
+
