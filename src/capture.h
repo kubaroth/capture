@@ -228,9 +228,7 @@ SegmentsInfo boundary_tracing(PageInfo& info, std::vector<RGB>& rgbs){
 
 
     unordered_set<RGB*> white_set;
-    // TODO: at the moment we take into the account only bright pixels
-    //       - provide the threshold from the command line
-    auto threshold = RGB(240,240,240, 0, 0, 0);
+    auto threshold = RGB(info.threshold, info.threshold, info.threshold, 0, 0, 0);
     for (auto &px : rgbs){
         if (px >= threshold){
             white_set.insert(&px);

@@ -14,6 +14,7 @@ struct PageInfo{
     int page_num = 0;
     bool test_ppm=false;
     bool preview_segments=false;
+    int threshold = 240;
     PageInfo(int w, int h) : width(w), height(h) {}
     PageInfo() : width(0), height(0) {} // uninitialized dimensions
 };

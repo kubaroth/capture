@@ -21,6 +21,9 @@ void help(){
              Subsequently the captured image is cropped base on the largest area of brightest pixels.\n\
              and saved with crop filename.\n\
 -cw -window: Captures selected window followed by a crop to keep only the brightest pixels\n\
+-image-threshold: Amount of darker pixels to take into account (Default: 240) \n\
+                  To capture larger darker inside a small white one - use larger values (255) \n\
+                  to cull the dark pixels and include them.\n\
 -ppm       : Runs test on page_012.ppm image\n\
 -preview-segments: color code all found regions. Color largest region as red\n\
 -i -image  : Takes the input image and calculates crop\n\
@@ -46,6 +49,7 @@ int main(int argc, char * argv[]){
     bool ppm_ = false;
     bool crop_only_ = false;
     bool preview_segments_ = false;
+    bool image_threshold_ = false;
 
     std::string crop_input_image_ = "";
     std::string window_name_ = "";
@@ -84,6 +88,11 @@ int main(int argc, char * argv[]){
         cout << "Loading input image: " << crop_input_image_ <<endl;
     }
 
+    if (vpl::cmdOptionExists(args, "-image-threshold")){
+        help_ = false;
+        image_threshold_ = true;
+    }
+
     if (vpl::cmdOptionExists(args, "-ppm")){
         help_ = false;
         ppm_ = true;
@@ -118,6 +127,11 @@ int main(int argc, char * argv[]){
         // rgbs = loadPng(crop_input_image_);
         cout << "crop_only_ - NOT implemented" <<endl;
         return 1;
+    }
+
+    if (image_threshold_){
+        auto it = vpl::getCmdOption(args, "-image-threshold");
+        info.threshold = stoi(*(++it));
     }
 
     if (ppm_){
