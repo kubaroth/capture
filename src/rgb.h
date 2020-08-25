@@ -71,7 +71,7 @@ long setRGB(std::vector<RGB>& rgbs, RGB value, const PageInfo& info){
 const RGB* getPixel(const std::vector<RGB>& rgbs, const RGB& pixel, Direction dir, const PageInfo& info){
     if ((dir == up)    && (pixel.index - info.width > 0))  return &rgbs[pixel.index - info.width];
     if ((dir == down)  && (pixel.index + info.width < info.width * info.height))  return &rgbs[pixel.index + info.width];
-    if ((dir == left)  && (pixel.index + info.width > 0))  return &rgbs[pixel.index - 1];
+    if ((dir == left)  && (pixel.index % info.width > 0))  return &rgbs[pixel.index - 1];
     if ((dir == right) && (pixel.index + 1 < info.width * info.height))  return &rgbs[pixel.index + 1];
     else return nullptr;
 }
