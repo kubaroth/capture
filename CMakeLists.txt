@@ -35,4 +35,11 @@ target_link_libraries(capture
 
 add_executable(rgb tests/mainimport.cpp tests/rgb.cpp)
 add_test(NAME "rgb" COMMAND "rgb")
+add_executable(image tests/mainimport.cpp tests/image.cpp)
+add_test(NAME "image" COMMAND "image")
+
+target_link_libraries(image
+  ${PDFHUMMUS_PATH}/lib/libLibPng.a
+  ${PDFHUMMUS_PATH}/lib/libZlib.a
+  )
 

@@ -1,6 +1,9 @@
 #pragma once
 
+#include <fstream>
+
 #include "rgb.h"
+#include "../install_dir/include/LibPng/png.h"
 
 namespace vpl{
 
@@ -61,13 +64,13 @@ void savePng(const std::vector<RGB>& rgbs, const std::string& name, const PageIn
 
 int savepng(std::vector<vpl::RGB>& rgbs, vpl::PageInfo& info) {
 
-
     int width = info.width;
     int height = info.height;
 
     assert (width > 0);
     assert (height > 0);
-
+    assert (info.filename.compare("") != 0);
+    
     FILE * fp;
     png_structp png_ptr = NULL;
     png_infop info_ptr = NULL;

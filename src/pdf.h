@@ -1,5 +1,10 @@
 #pragma once
 
+#include "../install_dir/include/PDFWriter/PDFWriter.h"
+#include "../install_dir/include/PDFWriter/PDFPage.h"
+#include "../install_dir/include/PDFWriter/PageContentContext.h"
+#include "../install_dir/include/PDFWriter/PDFFormXObject.h"
+
 namespace vpl{
 
 int savepdf(vpl::PageInfo& info){

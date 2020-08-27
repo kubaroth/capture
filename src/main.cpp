@@ -1,12 +1,5 @@
 #include <iostream>
 
-#include "../install_dir/include/PDFWriter/PDFWriter.h"
-#include "../install_dir/include/PDFWriter/PDFPage.h"
-#include "../install_dir/include/PDFWriter/PageContentContext.h"
-#include "../install_dir/include/PDFWriter/PDFFormXObject.h"
-
-#include "../install_dir/include/LibPng/png.h"
-
 #include "capture.h"
 #include "pdf.h"
 
