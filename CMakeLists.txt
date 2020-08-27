@@ -33,6 +33,6 @@ target_link_libraries(capture
   X11
   )
 
-add_executable(test1 tests/mainimport.cpp tests/test1.cpp)
-add_test(NAME "test1" COMMAND "test1")
+add_executable(rgb tests/mainimport.cpp tests/rgb.cpp)
+add_test(NAME "rgb" COMMAND "rgb")
 
