@@ -3,6 +3,7 @@ X11 screen capture command line tool.
 Generated image is converted to a pdf file.
 
 ## Build
+
 ```
 git clone --recursive https://github.com/kubaroth/capture.git
 mkdir __build
@@ -10,6 +11,12 @@ cd __build
 cmake ..
 make
 ```
+#### Requirements
+- PDFWriter
+- X11
+
+#### Optional requirements
+- Doxygen
 ## Use
 Entire screen capture:
 ```
